@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bus Ticket Booking</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f4f4f4;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .search-form {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            margin: 20px 0;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .bus-list {
+            display: grid;
+            gap: 20px;
+        }
+
+        .bus-card {
+            background-color: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .seat-layout {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+        }
+
+        .seat {
+            background-color: #ddd;
+            padding: 10px;
+            text-align: center;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .seat.selected {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .seat.booked {
+            background-color: #ff4444;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>Bus Ticket Booking</h1>
+    </header>
+
+    <div class="container">
+        <!-- Search Form -->
+        <div class="search-form">
+            <h2>Search Buses</h2>
+            <form id="searchForm">
+                <div class="form-group">
+                    <label>From</label>
+                    <select id="fromCity" required>
+                        <option value="">Select City</option>
+                        <option value="new-york">New York</option>
+                        <option value="los-angeles">Los Angeles</option>
+                        <option value="chicago">Chicago</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>To</label>
+                    <select id="toCity" required>
+                        <option value="">Select City</option>
+                        <option value="new-york">New York</option>
+                        <option value="los-angeles">Los Angeles</option>
+                        <option value="chicago">Chicago</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Travel Date</label>
+                    <input type="date" id="travelDate" required>
+                </div>
+                <button type="submit">Search Buses</button>
+            </form>
+        </div>
+
+        <!-- Bus List -->
+        <div class="bus-list" id="busList">
+            <!-- Bus cards will be dynamically added here -->
+        </div>
+
+        <!-- Booking Form -->
+        <div class="booking-form" id="bookingForm" style="display: none;">
+            <h2>Book Tickets</h2>
+            <div class="seat-layout" id="seatLayout">
+                <!-- Seats will be dynamically generated here -->
+            </div>
+            <div class="form-group">
+                <label>Passenger Name</label>
+                <input type="text" id="passengerName" required>
+            </div>
+            <div class="form-group">
+                <label>Mobile Number</label>
+                <input type="tel" id="mobileNumber" required>
+            </div>
+            <button onclick="confirmBooking()">Confirm Booking</button>
+        </div>
+    </div>
+
+    <script>
+        // Sample bus data
+        const buses = [
+            { id: 1, name: "Express Bus", from: "new-york", to: "los-angeles", 
+             departure: "08:00 AM", price: 100, seats: 40 },
+            { id: 2, name: "Luxury Bus", from: "chicago", to: "new-york", 
+             departure: "10:00 AM", price: 120, seats: 30 }
+        ];
+
+        let selectedBus = null;
+        let selectedSeats = [];
+
+        document.getElementById('searchForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const from = document.getElementById('fromCity').value;
+            const to = document.getElementById('toCity').value;
+            const date = document.getElementById('travelDate').value;
+            
+            // Filter buses
+            const filteredBuses = buses.filter(bus => 
+                bus.from === from && bus.to === to
+            );
+            
+            displayBuses(filteredBuses);
+        });
+
+        function displayBuses(buses) {
+            const busList = document.getElementById('busList');
+            busList.innerHTML = '';
+            
+            buses.forEach(bus => {
+                const busCard = document.createElement('div');
+                busCard.className = 'bus-card';
+                busCard.innerHTML = `
+                    <h3>${bus.name}</h3>
+                    <p>Departure: ${bus.departure}</p>
+                    <p>Price: $${bus.price}</p>
+                    <p>Available Seats: ${bus.seats}</p>
+                    <button onclick="showBookingForm(${bus.id})">Book Now</button>
+                `;
+                busList.appendChild(busCard);
+            });
+        }
+
+        function showBookingForm(busId) {
+            selectedBus = buses.find(bus => bus.id === busId);
+            document.getElementById('busList').style.display = 'none';
+            document.getElementById('bookingForm').style.display = 'block';
+            
+            // Generate seats
+            const seatLayout = document.getElementById('seatLayout');
+            seatLayout.innerHTML = '';
+            
+            for(let i = 1; i <= selectedBus.seats; i++) {
+                const seat = document.createElement('div');
+                seat.className = 'seat';
+                seat.textContent = i;
+                seat.onclick = () => toggleSeatSelection(seat, i);
+                seatLayout.appendChild(seat);
+            }
+        }
+
+        function toggleSeatSelection(seatElement, seatNumber) {
+            if(seatElement.classList.contains('booked')) return;
+            
+            seatElement.classList.toggle('selected');
+            const index = selectedSeats.indexOf(seatNumber);
+            if(index === -1) {
+                selectedSeats.push(seatNumber);
+            } else {
+                selectedSeats.splice(index, 1);
+            }
+        }
+
+        function confirmBooking() {
+            const passengerName = document.getElementById('passengerName').value;
+            const mobileNumber = document.getElementById('mobileNumber').value;
+            
+            if(!passengerName || !mobileNumber || selectedSeats.length === 0) {
+                alert('Please fill all fields and select at least one seat');
+                return;
+            }
+
+            const bookingDetails = {
+                bus: selectedBus.name,
+                seats: selectedSeats,
+                passengerName,
+                mobileNumber,
+                total: selectedBus.price * selectedSeats.length
+            };
+
+            alert(`Booking Confirmed!\n
+                  Passenger: ${bookingDetails.passengerName}\n
+                  Seats: ${bookingDetails.seats.join(', ')}\n
+                  Total: $${bookingDetails.total}`);
+            
+            // Reset form
+            selectedSeats = [];
+            document.getElementById('bookingForm').reset();
+            document.getElementById('bookingForm').style.display = 'none';
+            document.getElementById('busList').style.display = 'grid';
+        }
+    </script>
+</body>
+</html>
